@@ -1,0 +1,33 @@
+# Autor: junenu
+
+IPv4_CIDR_REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+IPv6_CIDR_REGEX='^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]{1,3}$'
+IPv4_ADDR_REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+IPv6_ADDR_REGEX='^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'
+
+ICMP_INTERVAL=0.2
+ICMP_COUNT=5
+
+get_ipv4_addr () {
+    local interface="$1"
+    if [ -z "$interface" ]; then
+        echo "Interface is empty. Please provide a valid interface."
+        return 1
+    fi
+    if ! command -v ifconfig >/dev/null 2>&1; then
+        echo "ifconfig command not found. Please install the net-tools package."
+        return 1
+    fi
+    local ipv4_addr=$(ifconfig "$interface" | awk '/inet /{print $2}')
+    if [ -z "$ipv4_addr" ]; then
+        echo "No IPv4 address found for interface "$interface""
+        return 1
+    fi
+    echo "IPv4 Address : "$ipv4_addr""
+}
+
+main () {
+    get_ipv4_addr $1
+}
+
+main $1
