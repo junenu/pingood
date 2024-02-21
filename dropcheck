@@ -84,7 +84,6 @@ def check_ip_address():
 		exit()
 
 # ping check module
-
 def check_ping_mac():
 	gws = netifaces.gateways()
 	ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
@@ -93,6 +92,7 @@ def check_ping_mac():
 		print("Ping to default gateway:", ipv4_default_gateway, "OK")
 	else:
 		print("Ping to default gateway:", ipv4_default_gateway, "NG")
+	
 	ping_google_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + GOOGLE_DNS)
 	if ping_google_result == 0:
 		print("Ping to Google DNS:", GOOGLE_DNS, "OK")
