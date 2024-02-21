@@ -1,33 +1,127 @@
-# Autor: junenu
+#!/usr/bin/python3
+# original software is "dcheck"
+# coding by junenu(june@wanpachi.dev)
 
-IPv4_CIDR_REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
-IPv6_CIDR_REGEX='^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]{1,3}$'
-IPv4_ADDR_REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
-IPv6_ADDR_REGEX='^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'
+import re
+import os
+import platform
+import sys
+import socket
+import subprocess
+import netifaces
 
-ICMP_INTERVAL=0.2
-ICMP_COUNT=5
+SOFTWARE_NAME = "dcheck"
+SOFTWARE_VERSION = "0.1.0"
+OS_NAME = platform.system()
+ADAPTER_NAME = sys.argv[1]
 
-get_ipv4_addr () {
-    local interface="$1"
-    if [ -z "$interface" ]; then
-        echo "Interface is empty. Please provide a valid interface."
-        return 1
-    fi
-    if ! command -v ifconfig >/dev/null 2>&1; then
-        echo "ifconfig command not found. Please install the net-tools package."
-        return 1
-    fi
-    local ipv4_addr=$(ifconfig "$interface" | awk '/inet /{print $2}')
-    if [ -z "$ipv4_addr" ]; then
-        echo "No IPv4 address found for interface "$interface""
-        return 1
-    fi
-    echo "IPv4 Address : "$ipv4_addr""
-}
+ICMP_INTERVAL = 0.5
+ICMP_COUNT = 3
 
-main () {
-    get_ipv4_addr $1
-}
+GOOGLE_DNS = "8.8.8.8"
 
-main $1
+# print software name and version
+print(SOFTWARE_NAME + " " + SOFTWARE_VERSION)
+
+# check ip address module
+def check_ipv4_address_win():
+	hostname = socket.gethostname()
+	ipv4_address = socket.gethostbyname(hostname)
+	process = subprocess.Popen("ipconfig", stdout=subprocess.PIPE)
+	out, err = process.communicate()
+	ipv4_default_gateway = re.findall(r"Default Gateway . . . . . . . . . : ([^\s]+)", out.decode())
+
+	print("IPv4 Address:", ipv4_address)
+	print("IPv4 Default Gateway:", ipv4_default_gateway[0] if ipv4_default_gateway else "Not found")
+
+def check_ipv6_address_win():
+    hostname = socket.gethostname()
+    ipv6_address = socket.getaddrinfo(hostname, None, socket.AF_INET6)
+    process = subprocess.Popen("ipconfig", stdout=subprocess.PIPE)
+    out, err = process.communicate()
+    ipv6_default_gateway = re.findall(r"Default Gateway . . . . . . . . . : ([^\s]+)", out.decode())
+
+    print("IPv6 Address:", ipv6_address[0][4][0] if ipv6_address else "Not found")
+    print("IPv6 Default Gateway:", ipv6_default_gateway[0] if ipv6_default_gateway else "Not found")
+
+def check_ipv4_address_mac():
+	gws = netifaces.gateways()
+	ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
+	addrs = netifaces.ifaddresses(ADAPTER_NAME)
+	ip_info = addrs[netifaces.AF_INET][0]
+	ipv4_address = ip_info['addr']
+	netmask = ip_info['netmask']
+
+	print("IPv4 Address:", ipv4_address)
+	print("IPv4 Netmask:", netmask)
+	print("IPv4 Default Gateway:", ipv4_default_gateway)
+
+def check_ipv6_address_mac():
+	gws = netifaces.gateways()
+	ipv6_default_gateway = gws['default'].get(netifaces.AF_INET6)
+	ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
+
+	addrs = netifaces.ifaddresses(ADAPTER_NAME)
+	ipv6_info = addrs.get(netifaces.AF_INET6)
+	ipv6_address = ipv6_info[0]['addr'] if ipv6_info else "Not found"
+	netmask = ipv6_info[0]['netmask'] if ipv6_info else "Not found"
+
+	print("IPv6 Address:", ipv6_address)
+	print("IPv6 Netmask:", netmask)
+	print("IPv6 Default Gateway:", ipv6_default_gateway_address)
+
+def check_ip_address():
+	if OS_NAME == "Windows":
+		check_ipv4_address_win()
+		check_ipv6_address_win()
+
+	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+		check_ipv4_address_mac()
+		check_ipv6_address_mac()
+	
+	else:
+		print("Not supported OS.")
+		exit()
+
+# ping check module
+
+def check_ping_mac():
+	gws = netifaces.gateways()
+	ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
+	ping_gateway_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + ipv4_default_gateway)
+	if ping_gateway_result == 0:
+		print("Ping to default gateway:", ipv4_default_gateway, "OK")
+	else:
+		print("Ping to default gateway:", ipv4_default_gateway, "NG")
+	ping_google_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + GOOGLE_DNS)
+	if ping_google_result == 0:
+		print("Ping to Google DNS:", GOOGLE_DNS, "OK")
+	else:
+		print("Ping to Google DNS:", GOOGLE_DNS, "NG")
+		
+def check_ping_win():
+	print("Not supported OS.")
+	
+def check_ping():
+	if OS_NAME == "Windows":
+		check_ping_win()
+	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+		check_ping_mac()
+	else:
+		print("Not supported OS.")
+		exit()
+
+# main precedure
+def main():
+	print("------------ip address------------")
+	print("Interface:", ADAPTER_NAME)
+	check_ip_address()
+	print("------------ping------------")
+	check_ping()
+	
+	
+
+if __name__ == "__main__":
+	main()
+
+#def show_ip_address(adapter_name):
