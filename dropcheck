@@ -110,6 +110,21 @@ def check_ping():
 	else:
 		print("Not supported OS.")
 		exit()
+		
+def check_dns_mac():
+	print(subprocess.run(["dig", "yahoo.com"], stdout=subprocess.PIPE))
+	
+def check_dns_win():
+    print("Not supported OS.")
+	
+def check_dns():
+	if OS_NAME == "Windows":
+		check_dns_win()
+	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+		check_dns_mac()
+	else:
+		print("Not supported OS.")
+		exit()
 
 # main precedure
 def main():
@@ -118,6 +133,8 @@ def main():
 	check_ip_address()
 	print("------------ping------------")
 	check_ping()
+	print("------------dns------------")
+	check_dns()
 	
 	
 
