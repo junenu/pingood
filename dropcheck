@@ -29,24 +29,13 @@ print(SOFTWARE_NAME + " " + SOFTWARE_VERSION)
 
 # check ip address module
 def check_ipv4_address_win():
-	hostname = socket.gethostname()
-	ipv4_address = socket.gethostbyname(hostname)
-	process = subprocess.Popen("ipconfig", stdout=subprocess.PIPE)
-	out, err = process.communicate()
-	ipv4_default_gateway = re.findall(r"Default Gateway . . . . . . . . . : ([^\s]+)", out.decode())
-
-	print("IPv4 Address:", ipv4_address)
-	print("IPv4 Default Gateway:", ipv4_default_gateway[0] if ipv4_default_gateway else "Not found")
+	print("Not supported OS.")
+	exit()
 
 def check_ipv6_address_win():
-    hostname = socket.gethostname()
-    ipv6_address = socket.getaddrinfo(hostname, None, socket.AF_INET6)
-    process = subprocess.Popen("ipconfig", stdout=subprocess.PIPE)
-    out, err = process.communicate()
-    ipv6_default_gateway = re.findall(r"Default Gateway . . . . . . . . . : ([^\s]+)", out.decode())
+	print("Not supported OS.")
+	exit()
 
-    print("IPv6 Address:", ipv6_address[0][4][0] if ipv6_address else "Not found")
-    print("IPv6 Default Gateway:", ipv6_default_gateway[0] if ipv6_default_gateway else "Not found")
 
 def check_ipv4_address_mac():
 	gws = netifaces.gateways()
@@ -103,6 +92,7 @@ def check_ping_mac(PING_TARGET=None):
 		
 def check_ping_win(PING_TARGET=None):
 	print("Not supported OS.")
+	exit()
 	
 def check_ping(PING_TARGET=None):
 	if OS_NAME == "Windows":
