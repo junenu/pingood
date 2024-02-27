@@ -5,16 +5,15 @@
 import re
 import os
 import platform
-import sys
 import socket
 import subprocess
 import netifaces
+import argparse
 
 # software information
 SOFTWARE_NAME = "dcheck"
 SOFTWARE_VERSION = "0.1.0"
 OS_NAME = platform.system()
-ADAPTER_NAME = sys.argv[1]
 
 # ping check parameters
 ICMP_INTERVAL = 0.5
@@ -30,6 +29,13 @@ VIA_NW_DEVICES = {"192.168.10.1":"Router"}
 # domain name
 YAHOO_DOMAIN = "yahoo.com"
 GOOGLE_DOMAIN = "google.com"
+
+# argument parser
+parser = argparse.ArgumentParser(description='Check network status.')
+parser.add_argument('adapter_name', help='Adapter name')
+args = parser.parse_args()
+
+ADAPTER_NAME = args.adapter_name
 
 # print software name and version
 print(SOFTWARE_NAME + " " + SOFTWARE_VERSION)
