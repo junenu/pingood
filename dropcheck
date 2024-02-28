@@ -1,18 +1,14 @@
 #!/usr/bin/python3
-# original software is "dcheck"
 # coding by junenu(june@wanpachi.dev)
 
 import re
 import os
 import platform
-import socket
 import subprocess
 import netifaces
 import argparse
 
-# software information
-SOFTWARE_NAME = "dcheck"
-SOFTWARE_VERSION = "0.1.0"
+# global variables
 OS_NAME = platform.system()
 
 # ping check parameters
@@ -37,102 +33,76 @@ args = parser.parse_args()
 
 ADAPTER_NAME = args.adapter_name
 
-# print software name and version
-print(SOFTWARE_NAME + " " + SOFTWARE_VERSION)
-
 # check ip address module
-def check_ipv4_address_win():
-	print("Not supported OS.")
-	exit()
-
-def check_ipv6_address_win():
-	print("Not supported OS.")
-	exit()
-
-def check_ipv4_address_mac(ADAPTER_NAME):
-	gws = netifaces.gateways()
-	ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
-	addrs = netifaces.ifaddresses(ADAPTER_NAME)
-	ip_info = addrs[netifaces.AF_INET][0]
-	ipv4_address = ip_info['addr']
-	netmask = ip_info['netmask']
-
-	print("IPv4 Address:", '\033[34m'+ipv4_address+'\033[0m')
-	print("IPv4 Netmask:", '\033[34m'+netmask+'\033[0m')
-	print("IPv4 Default Gateway:", '\033[34m'+ipv4_default_gateway+'\033[0m')
-
-def check_ipv6_address_mac(ADAPTER_NAME):
-	gws = netifaces.gateways()
-	ipv6_default_gateway = gws['default'].get(netifaces.AF_INET6)
-	ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
-
-	addrs = netifaces.ifaddresses(ADAPTER_NAME)
-	ipv6_info = addrs.get(netifaces.AF_INET6)
-	ipv6_address = ipv6_info[0]['addr'] if ipv6_info else "Not found"
-	netmask = ipv6_info[0]['netmask'] if ipv6_info else "Not found"
-
-	print("IPv6 Address:", ipv6_address)
-	print("IPv6 Netmask:", netmask)
-	print("IPv6 Default Gateway:", ipv6_default_gateway_address)
-
 def check_ip_address():
 	if OS_NAME == "Windows":
-		check_ipv4_address_win()
-		check_ipv6_address_win()
+		print("Not supported OS.")
+		exit()
 
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
-		check_ipv4_address_mac(ADAPTER_NAME)
-		check_ipv6_address_mac(ADAPTER_NAME)
+		# ipv4 address check
+		gws = netifaces.gateways()
+		ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
+		addrs = netifaces.ifaddresses(ADAPTER_NAME)
+		ip_info = addrs[netifaces.AF_INET][0]
+		ipv4_address = ip_info['addr']
+		netmask = ip_info['netmask']
+
+		print("IPv4 Address:", '\033[34m'+ipv4_address+'\033[0m')
+		print("IPv4 Netmask:", '\033[34m'+netmask+'\033[0m')
+		print("IPv4 Default Gateway:", '\033[34m'+ipv4_default_gateway+'\033[0m')
+
+		# ipv6 address check
+		gws = netifaces.gateways()
+		ipv6_default_gateway = gws['default'].get(netifaces.AF_INET6)
+		ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
+		addrs = netifaces.ifaddresses(ADAPTER_NAME)
+		ipv6_info = addrs.get(netifaces.AF_INET6)
+		ipv6_address = ipv6_info[0]['addr'] if ipv6_info else "Not found"
+		netmask = ipv6_info[0]['netmask'] if ipv6_info else "Not found"
+
+		print("IPv6 Address:", ipv6_address)
+		print("IPv6 Netmask:", netmask)
+		print("IPv6 Default Gateway:", ipv6_default_gateway_address)
 	
 	else:
 		print("Not supported OS.")
 		exit()
 
-# ping check module
-def check_ping_mac(PING_TARGET=None):
-	gws = netifaces.gateways()
-	ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
-	
-	if PING_TARGET is None:
-		PING_TARGET = ipv4_default_gateway
-		
-	ping_gateway_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + PING_TARGET + " > /dev/null")
-	if ping_gateway_result == 0:
-		print("Ping to", PING_TARGET, '\033[32m'+'OK'+'\033[0m')
-	else:
-		print("Ping to", PING_TARGET, '\033[32m'+'NG'+'\033[0m')
-		
-def check_ping_win(PING_TARGET=None):
-	print("Not supported OS.")
-	exit()
-	
+# ping check module	
 def check_ping(PING_TARGET=None):
 	if OS_NAME == "Windows":
-		check_ping_win(PING_TARGET)
+		print("Not supported OS.")
+		exit()
+
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
-		check_ping_mac(PING_TARGET)
+		gws = netifaces.gateways()
+		ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
+		
+		if PING_TARGET is None:
+			PING_TARGET = ipv4_default_gateway
+			
+		ping_gateway_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + PING_TARGET + " > /dev/null")
+		if ping_gateway_result == 0:
+			print("Ping to", PING_TARGET, '\033[32m'+'OK'+'\033[0m')
+		else:
+			print("Ping to", PING_TARGET, '\033[32m'+'NG'+'\033[0m')
+	
 	else:
 		print("Not supported OS.")
 		exit()
 
 # traceroute check module
-def check_traceroute_mac(destination_ip):
-	result = subprocess.run(["traceroute", destination_ip], capture_output=True, text=True)
-	ipv4_regex = r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)'
-	ip_addresses = re.findall(ipv4_regex, result.stdout)
-	return ip_addresses
-
-def check_traceroute_win(destination_ip):
-	print("Not supported OS.")
-	exit()
-
 def check_traceroute(destination_ip):
 	if OS_NAME == "Windows":
-		check_traceroute_win(destination_ip)
+		print("Not supported OS.")
+		exit()
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
-		result = check_traceroute_mac(destination_ip)
-		print("Traceroute to", destination_ip, "is", result)
-		for ip in result:
+		result = subprocess.run(["traceroute", destination_ip], capture_output=True, text=True)
+		ipv4_regex = r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)'
+		ip_addresses = re.findall(ipv4_regex, result.stdout)
+		print("Traceroute to", destination_ip, "is", ip_addresses)
+		for ip in ip_addresses:
 			if ip in VIA_NW_DEVICES:
 				print("Via", VIA_NW_DEVICES[ip], ":", ip)
 		else:
@@ -143,28 +113,25 @@ def check_traceroute(destination_ip):
 		exit()
 
 # dns check module
-def check_ipv4dns_mac(DOMAIN_NAME):
-	#DNS cache clear
-	print("Clearing DNS cache...")
-	subprocess.run(["killall", "-HUP", "mDNSResponder"])
-	print("DNS cache cleared.")
-
-	#DNS resolution check
-	result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
-	if result.returncode == 0:
-		print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
-		print(result.stdout.decode())
-	else:
-		print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'NG'+'\033[0m')
-	
-def check_ipv4dns_win():
-    print("Not supported OS.")
-	
 def check_dns(DOMAIN_NAME):
 	if OS_NAME == "Windows":
-		check_ipv4dns_win(DOMAIN_NAME)
+		print("Not supported OS.")
+		exit()
+
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
-		check_ipv4dns_mac(DOMAIN_NAME)
+		#DNS cache clear
+		print("Clearing DNS cache...")
+		subprocess.run(["killall", "-HUP", "mDNSResponder"])
+		print("DNS cache cleared.")
+
+		#DNS resolution check
+		result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
+		if result.returncode == 0:
+			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+			print(result.stdout.decode())
+		else:
+			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'NG'+'\033[0m')
+
 	else:
 		print("Not supported OS.")
 		exit()
@@ -187,9 +154,6 @@ def main():
 	check_dns(YAHOO_DOMAIN)
 	check_dns(GOOGLE_DOMAIN)
 	
-	
-
+# main
 if __name__ == "__main__":
 	main()
-
-#def show_ip_address(adapter_name):
