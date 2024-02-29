@@ -1,5 +1,13 @@
 # dropcheck
 
+## Usage
+
+### mac
+
+```
+brew install iproute2mac
+```
+
 ## memo
 
 ```
