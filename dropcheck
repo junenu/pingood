@@ -5,7 +5,6 @@ import re
 import os
 import platform
 import subprocess
-import netifaces
 import argparse
 
 # global variables
@@ -41,29 +40,25 @@ def check_ip_address():
 
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
 		# ipv4 address check
-		gws = netifaces.gateways()
-		ipv4_default_gateway = gws['default'][netifaces.AF_INET][0]
-		addrs = netifaces.ifaddresses(ADAPTER_NAME)
-		ip_info = addrs[netifaces.AF_INET][0]
-		ipv4_address = ip_info['addr']
-		netmask = ip_info['netmask']
+		ipv4_address = subprocess.run(["ip","-4","addr","show",ADAPTER_NAME,"2>","/dev/null","|","grep","-m","1","inet","|","awk","'{print $2}'"], capture_output=True, text=True)
+		#netmask = ip_info['netmask']
 
 		print("IPv4 Address:", '\033[34m'+ipv4_address+'\033[0m')
-		print("IPv4 Netmask:", '\033[34m'+netmask+'\033[0m')
-		print("IPv4 Default Gateway:", '\033[34m'+ipv4_default_gateway+'\033[0m')
+		#print("IPv4 Netmask:", '\033[34m'+netmask+'\033[0m')
+		#print("IPv4 Default Gateway:", '\033[34m'+ipv4_default_gateway+'\033[0m')
 
 		# ipv6 address check
-		gws = netifaces.gateways()
-		ipv6_default_gateway = gws['default'].get(netifaces.AF_INET6)
-		ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
-		addrs = netifaces.ifaddresses(ADAPTER_NAME)
-		ipv6_info = addrs.get(netifaces.AF_INET6)
-		ipv6_address = ipv6_info[0]['addr'] if ipv6_info else "Not found"
-		netmask = ipv6_info[0]['netmask'] if ipv6_info else "Not found"
+		# gws = netifaces.gateways()
+		# ipv6_default_gateway = gws['default'].get(netifaces.AF_INET6)
+		# ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
+		# addrs = netifaces.ifaddresses(ADAPTER_NAME)
+		# ipv6_info = addrs.get(netifaces.AF_INET6)
+		# ipv6_address = ipv6_info[0]['addr'] if ipv6_info else "Not found"
+		# netmask = ipv6_info[0]['netmask'] if ipv6_info else "Not found"
 
-		print("IPv6 Address:", ipv6_address)
-		print("IPv6 Netmask:", netmask)
-		print("IPv6 Default Gateway:", ipv6_default_gateway_address)
+		# print("IPv6 Address:", ipv6_address)
+		# print("IPv6 Netmask:", netmask)
+		# print("IPv6 Default Gateway:", ipv6_default_gateway_address)
 	
 	else:
 		print("Not supported OS.")
