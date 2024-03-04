@@ -2,10 +2,22 @@
 
 ## Usage
 
+### windows
+
+```
+To be continued
+```
+
 ### mac
 
 ```
 brew install iproute2mac
+```
+
+### linux
+
+```
+sudo apt install iproute2
 ```
 
 ## memo
