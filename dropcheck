@@ -111,7 +111,7 @@ def check_ping(PING_TARGET=None):
 		if ping_gateway_result == 0:
 			print("Ping to", PING_TARGET, '\033[32m'+'OK'+'\033[0m')
 		else:
-			print("Ping to", PING_TARGET, '\033[32m'+'NG'+'\033[0m')
+			print("Ping to", PING_TARGET, '\033[31m'+'NG'+'\033[0m')
 	
 	else:
 		print("Not supported OS.")
@@ -154,7 +154,7 @@ def check_dns(DOMAIN_NAME):
 		if result.returncode == 0:
 			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
 		else:
-			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'NG'+'\033[0m')
+			print("DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
 
 	else:
 		print("Not supported OS.")
@@ -183,6 +183,9 @@ def main():
 	print("------------dns------------")
 	check_dns(YAHOO_DOMAIN)
 	check_dns(GOOGLE_DOMAIN)
+	print(" ")
+	print("------------file download------------")
+	check_file_download()
 	
 # main
 if __name__ == "__main__":
