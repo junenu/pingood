@@ -153,7 +153,6 @@ def check_dns(DOMAIN_NAME):
 		result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
 		if result.returncode == 0:
 			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
-			print(result.stdout.decode())
 		else:
 			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'NG'+'\033[0m')
 
