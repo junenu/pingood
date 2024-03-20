@@ -17,7 +17,7 @@ ICMP_INTERVAL = 0.5
 ICMP_COUNT = 3
 
 # DNS server
-GOOGLE_DNS_1 = "8.8.8.8"
+GOOGLE_DNS_IPV4 = "8.8.8.8"
 PRIVATE_DNS_1 = "192.168.10.1"
 
 # Via NW devices
@@ -231,17 +231,17 @@ def main():
 	print(" ")
 	print("------------ping------------")
 	check_ping() #ping to default gateway
-	check_ping(GOOGLE_DNS_1)
+	check_ping(GOOGLE_DNS_IPV4)
 	print(" ")
 	print("------------traceroute------------")
-	check_traceroute(GOOGLE_DNS_1)
+	check_traceroute(GOOGLE_DNS_IPV4)
 	print(" ")
 	print("------------dns------------")
 	check_dns_a(YAHOO_DOMAIN)
 	check_dns_a(GOOGLE_DOMAIN)
-	check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_1)
+	check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_IPV4)
 	check_dns_aaaa(GOOGLE_DOMAIN)
-	check_dns_aaaa(GOOGLE_DOMAIN, GOOGLE_DNS_1)
+	check_dns_aaaa(GOOGLE_DOMAIN, GOOGLE_DNS_IPV4)
 	print(" ")
 	print("------------http------------")
 	check_http(GOOGLE_IPV4)
