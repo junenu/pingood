@@ -157,15 +157,44 @@ def check_dns_a(DOMAIN_NAME, DNS_SERVER=None):
 		if DNS_SERVER is None:
 			result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
 			if result.returncode == 0:
-				print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+				print("IPv4DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
 			else:
-				print("DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
+				print("IPv4DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
 		else:
 			result = subprocess.run(["dig", DOMAIN_NAME, "A", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
 			if result.returncode == 0:
-				print("DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
+				print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
 			else:
-				print("DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
+				print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
+
+	else:
+		print("Not supported OS.")
+		exit()
+
+def check_dns_aaaa(DOMAIN_NAME, DNS_SERVER=None):
+	if OS_NAME == "Windows":
+		print("Not supported OS.")
+		exit()
+
+	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+		#DNS cache clear
+		print("Clearing DNS cache...")
+		subprocess.run(["killall", "-HUP", "mDNSResponder"])
+		print("DNS cache cleared.")
+
+		#DNS resolution check
+		if DNS_SERVER is None:
+			result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "+short"], stdout=subprocess.PIPE)
+			if result.returncode == 0:
+				print("IPv6DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+			else:
+				print("IPv6DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
+		else:
+			result = subprocess.run(["dig", DOMAIN_NAME, "AAAAA", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
+			if result.returncode == 0:
+				print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
+			else:
+				print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
 
 	else:
 		print("Not supported OS.")
@@ -208,9 +237,11 @@ def main():
 	check_traceroute(GOOGLE_DNS_1)
 	print(" ")
 	print("------------dns------------")
-	check_dns(YAHOO_DOMAIN)
-	check_dns(GOOGLE_DOMAIN)
-	check_dns(GOOGLE_DOMAIN, GOOGLE_DNS_1)
+	check_dns_a(YAHOO_DOMAIN)
+	check_dns_a(GOOGLE_DOMAIN)
+	check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_1)
+	check_dns_aaaa(GOOGLE_DOMAIN)
+	check_dns_aaaa(GOOGLE_DOMAIN, GOOGLE_DNS_1)
 	print(" ")
 	print("------------http------------")
 	check_http(GOOGLE_IPv4)
