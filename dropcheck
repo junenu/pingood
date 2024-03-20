@@ -28,8 +28,8 @@ YAHOO_DOMAIN = "yahoo.com"
 GOOGLE_DOMAIN = "google.com"
 
 # http check parameters
-GOOGLE_IPv4 = "https://ipv4.google.com"
-GOOGLE_IPv6 = "https://ipv6.google.com"
+GOOGLE_IPV4 = "https://ipv4.google.com"
+GOOGLE_IPV6 = "https://ipv6.google.com"
 
 # argument parser
 parser = argparse.ArgumentParser(description='Check network status.')
@@ -244,8 +244,8 @@ def main():
 	check_dns_aaaa(GOOGLE_DOMAIN, GOOGLE_DNS_1)
 	print(" ")
 	print("------------http------------")
-	check_http(GOOGLE_IPv4)
-	check_http(GOOGLE_IPv6)
+	check_http(GOOGLE_IPV4)
+	check_http(GOOGLE_IPV6)
 	
 # main
 if __name__ == "__main__":
