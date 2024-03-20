@@ -142,7 +142,7 @@ def check_traceroute(destination_ip):
 		exit()
 
 # dns check module
-def check_dns(DOMAIN_NAME):
+def check_dns_a(DOMAIN_NAME, DNS_SERVER=None):
 	if OS_NAME == "Windows":
 		print("Not supported OS.")
 		exit()
@@ -154,11 +154,18 @@ def check_dns(DOMAIN_NAME):
 		print("DNS cache cleared.")
 
 		#DNS resolution check
-		result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
-		if result.returncode == 0:
-			print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+		if DNS_SERVER is None:
+			result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
+			if result.returncode == 0:
+				print("DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+			else:
+				print("DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
 		else:
-			print("DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
+			result = subprocess.run(["dig", DOMAIN_NAME, "A", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
+			if result.returncode == 0:
+				print("DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
+			else:
+				print("DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
 
 	else:
 		print("Not supported OS.")
@@ -203,6 +210,7 @@ def main():
 	print("------------dns------------")
 	check_dns(YAHOO_DOMAIN)
 	check_dns(GOOGLE_DOMAIN)
+	check_dns(GOOGLE_DOMAIN, GOOGLE_DNS_1)
 	print(" ")
 	print("------------http------------")
 	check_http(GOOGLE_IPv4)
