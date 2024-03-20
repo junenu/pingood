@@ -27,6 +27,10 @@ VIA_NW_DEVICES = {"192.168.10.1":"Router"}
 YAHOO_DOMAIN = "yahoo.com"
 GOOGLE_DOMAIN = "google.com"
 
+# http check parameters
+GOOGLE_IPv4 = "https://ipv4.google.com"
+GOOGLE_IPv6 = "https://ipv6.google.com"
+
 # argument parser
 parser = argparse.ArgumentParser(description='Check network status.')
 parser.add_argument('adapter_name', help='Adapter name')
@@ -160,6 +164,22 @@ def check_dns(DOMAIN_NAME):
 		print("Not supported OS.")
 		exit()
 
+def check_http(DOMAIN_NAME):
+	if OS_NAME == "Windows":
+		print("Not supported OS.")
+		exit()
+	
+	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+		response = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", DOMAIN_NAME], capture_output=True, text=True)
+		if response.stdout == "200":
+			print("HTTP to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
+		else:
+			print("HTTP to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
+
+	else:
+		print("Not supported OS.")
+		exit()
+
 # main precedure
 def main():
 	# check if iproute2mac is installed for macOS
@@ -184,8 +204,9 @@ def main():
 	check_dns(YAHOO_DOMAIN)
 	check_dns(GOOGLE_DOMAIN)
 	print(" ")
-	print("------------file download------------")
-	check_file_download()
+	print("------------http------------")
+	check_http(GOOGLE_IPv4)
+	check_http(GOOGLE_IPv6)
 	
 # main
 if __name__ == "__main__":
