@@ -12,12 +12,14 @@ To be continued
 
 ```
 brew install iproute2mac
+brew install mtr
 ```
 
 ### linux
 
 ```
 sudo apt install iproute2
+sudo apt install mtr
 ```
 
 ## memo
