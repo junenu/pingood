@@ -4,7 +4,7 @@
 
 ### Enable 802.1q
 
-<if_name> = vlan<vlan_id> 
+<if_name> = vlan<vlan_id>  
 ex. <if_name> = vlan100
 
 ```bash
