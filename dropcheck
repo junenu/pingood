@@ -179,7 +179,7 @@ def check_dns_aaaa(DOMAIN_NAME, DNS_SERVER=None):
 		print("Not supported OS.")
 		exit()
 
-	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
+	elif OS_NAME == "Darwin":
 		#DNS cache clear
 		print("Clearing DNS cache...")
 		subprocess.run(["killall", "-HUP", "mDNSResponder"])
