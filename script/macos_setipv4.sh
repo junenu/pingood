@@ -1,4 +1,7 @@
 #!/bin/bash
+# Set IPv4 on macOS
+# Usage: ./macos_setipv4.sh
+# Author: june@wanpachi.dev
 
 set -e
 
