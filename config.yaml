@@ -1,0 +1,34 @@
+ping_targets:
+  - name: dgw
+    ip_address: # Use default gateway
+  - name: google
+    ip_address: 8.8.8.8
+
+traceroute_targets:
+  - name: google
+    ip_address: 8.8.8.8
+
+via_nw_devices:
+  - name: Router
+    ip_address: 192.168.10.1
+  - name: Switch
+    ip_address: 192.168.10.2 
+
+dns_a_targets:
+  - name: google
+    domain: google.com
+    dns_server: 8.8.8.8
+  - name: google_dns
+    domain: google.com
+    dns_server: # Use default DNS server
+
+dns_aaaa_targets:
+  - name: google
+    domain: google.com
+    dns_server: # Use default DNS server
+
+http_targets:
+  - name: google
+    url: https://ipv4.google.com
+  - name: google_dns
+    url: https://ipv6.google.com

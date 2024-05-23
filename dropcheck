@@ -6,8 +6,8 @@ import os
 import platform
 import subprocess
 import argparse
-import re
 import ipaddress
+import yaml
 
 # global variables
 OS_NAME = platform.system()
@@ -27,20 +27,20 @@ PRIVATE_DNS_1 = "192.168.10.1"
 # Via NW devices
 VIA_NW_DEVICES = {"192.168.10.1":"Router"} 
 
-# domain name
-YAHOO_DOMAIN = "yahoo.com"
-GOOGLE_DOMAIN = "google.com"
-
-# http check parameters
-GOOGLE_IPV4 = "https://ipv4.google.com"
-GOOGLE_IPV6 = "https://ipv6.google.com"
-
 # argument parser
 parser = argparse.ArgumentParser(description='Check network status.')
 parser.add_argument('adapter_name', help='Adapter name')
+parser.add_argument('-c', '--config', default='config.yaml', help='Config file path')
 args = parser.parse_args()
 
 ADAPTER_NAME = args.adapter_name
+CONFIG_FILE = args.config
+
+# load config file
+def load_config(file_path):
+    with open(file_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
 
 # check if package is installed
 def is_brew_package_installed(package_name):
@@ -133,10 +133,11 @@ def check_traceroute(destination_ip):
 	elif OS_NAME == "Darwin" or OS_NAME == "Linux":
 		result = subprocess.run(["sudo", "mtr", "-4", "-n", "-r", "-c" , TRACEROUTE_COUNT, "-i", TRACEROUTE_INTERVAL, destination_ip], capture_output=True, text=True)
 		ip_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result.stdout)
+		config = load_config(CONFIG_FILE)
 		print("Traceroute to", destination_ip, "is", ip_addresses)
 		for ip in ip_addresses:
-			if ip in VIA_NW_DEVICES:
-				print("Via", VIA_NW_DEVICES[ip], ":", ip)
+			if ip in config["via_nw_devices"]:
+				print("Via", config['ip_address'], ":", ip)
 		else:
 			print("Trace complete.")
 
@@ -231,28 +232,34 @@ def main():
 		if not is_brew_package_installed("mtr"):
 			print("Error: mtr module not found.")
 			exit()
+	config = load_config(CONFIG_FILE)
 	print("------------ip address------------")
 	# print interface name for macOS and Linux
 	if OS_NAME == "Darwin" or OS_NAME == "Linux":
 		print("Interface:", ADAPTER_NAME)
+
 	check_ip_address()
 	print(" ")
 	print("------------ping------------")
-	check_ping() #ping to default gateway
-	check_ping(GOOGLE_DNS_IPV4)
+	ping_targets = config["ping_targets"]
+	for ping_target in ping_targets:
+		check_ping(ping_target['ip_address'])
 	print(" ")
 	print("------------traceroute------------")
-	check_traceroute(GOOGLE_DNS_IPV4)
+	traceroute_targets = config["traceroute_targets"]
+	for traceroute_target in traceroute_targets:
+		check_traceroute(traceroute_target['ip_address'])
 	print(" ")
 	print("------------dns------------")
-	check_dns_a(YAHOO_DOMAIN)
-	check_dns_a(GOOGLE_DOMAIN)
-	check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_IPV4)
-	check_dns_aaaa(GOOGLE_DOMAIN)
+	dns_a_targets = config["dns_a_targets"]
+	for dns_a_target in dns_a_targets:
+		check_dns_a(dns_a_target['domain'], dns_a_target['dns_server'])
+	for dns_a_target in dns_a_targets:
+		check_dns_aaaa(dns_a_target['domain'], dns_a_target['dns_server'])
 	print(" ")
 	print("------------http------------")
-	check_http(GOOGLE_IPV4)
-	check_http(GOOGLE_IPV6)
+	for http_target in config["http_targets"]:
+		check_http(http_target['url'])
 	
 # main
 if __name__ == "__main__":
