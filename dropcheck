@@ -261,7 +261,7 @@ def main():
 	check_ping(GOOGLE_DNS_IPV4)
 	print(" ")
 	print("------------traceroute------------")
-	check_traceroute(GOOGLE_DNS_IPV4)
+	check_traceroute_v4(GOOGLE_DNS_IPV4)
 	print(" ")
 	print("------------dns------------")
 	check_dns_a(YAHOO_DOMAIN)
