@@ -25,8 +25,7 @@ GOOGLE_DNS_IPV4 = "8.8.8.8"
 PRIVATE_DNS_1 = "192.168.10.1"
 
 # Via NW devices
-VIA_NW_DEVICES = {"192.168.10.1":"Router",
-				  ""} 
+VIA_NW_DEVICES = {"192.168.10.1":"Router"} 
 
 # domain name
 YAHOO_DOMAIN = "yahoo.com"
