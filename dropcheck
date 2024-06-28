@@ -213,7 +213,7 @@ def check_dns_aaaa(DOMAIN_NAME, DNS_SERVER=None):
 			else:
 				print("IPv6DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
 		else:
-			result = subprocess.run(["dig", DOMAIN_NAME, "AAAAA", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
+			result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
 			if result.stdout != b"":
 				print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
 			else:
