@@ -23,6 +23,7 @@ TRACEROUTE_INTERVAL = "0.1"
 # DNS server
 GOOGLE_DNS_IPV4 = "8.8.8.8"
 PRIVATE_DNS_1 = "192.168.10.1"
+GOOGLE_DNS_IPV6 = "2001:4860:4860::8888"
 
 # Via NW devices
 VIA_NW_DEVICES = {"192.168.10.1":"Router"} 
@@ -266,7 +267,7 @@ def main():
 	check_dns_a(YAHOO_DOMAIN)
 	check_dns_a(GOOGLE_DOMAIN)
 	check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_IPV4)
-	check_dns_aaaa(GOOGLE_DOMAIN)
+	check_dns_aaaa(GOOGLE_DOMAIN , GOOGLE_DNS_IPV6)
 	print(" ")
 	print("------------http------------")
 	check_http(GOOGLE_IPV4)
