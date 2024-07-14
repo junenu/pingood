@@ -16,6 +16,10 @@ OS_NAME = platform.system()
 ICMP_INTERVAL = 0.5
 ICMP_COUNT = 3
 
+# ping destination
+CLOUDFLARE_DNS_IPV4 = "1.1.1.1"
+CLOUDFLARE_DNS_IPV6 = "2606:4700:4700::1111"
+
 # traceroute check parameters
 TRACEROUTE_COUNT = "5"
 TRACEROUTE_INTERVAL = "0.1"
