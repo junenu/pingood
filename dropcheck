@@ -99,7 +99,7 @@ def check_ip_address():
 		exit()
 
 # ping check module	
-def check_ping(PING_TARGET=None):
+def check_ping_v4(PING_TARGET=None):
 	if OS_NAME == "Windows":
 		print("Not supported OS.")
 		exit()
@@ -257,8 +257,9 @@ def main():
 	check_ip_address()
 	print(" ")
 	print("------------ping------------")
-	check_ping() #ping to default gateway
-	check_ping(GOOGLE_DNS_IPV4)
+	check_ping_v4() #ping to default gateway
+	check_ping_v4(GOOGLE_DNS_IPV4)
+	check_ping_v4(CLOUDFLARE_DNS_IPV4)
 	print(" ")
 	print("------------traceroute------------")
 	check_traceroute_v4(GOOGLE_DNS_IPV4)
