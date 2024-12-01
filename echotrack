@@ -49,236 +49,199 @@ parser.add_argument('adapter_name', help='Adapter name')
 args = parser.parse_args()
 ADAPTER_NAME = args.adapter_name
 
-# check if package is installed
-def is_brew_package_installed(package_name):
-    try:
-        installed_packages = subprocess.check_output(['brew', 'list'], text=True)
-        
-        return package_name in installed_packages
-    except subprocess.CalledProcessError:
-        print("Error: brew command failed.")
-        return False
+class MacOs:
+    # Functions for macOS
+    ## Check if the package is installed
+    def is_brew_package_installed(self, package_name):
+        try:
+            installed_packages = subprocess.check_output(['brew', 'list'], text=True)
+            if not package_name in installed_packages:
+                print("Error: " + package_name + " is not installed.")
+                exit()
+        except subprocess.CalledProcessError:
+            print("Error: brew command failed.")
+            return False
+    ## Check IP address
+    def check_ip_address(self, adapter_name):
+        ipv4_result = subprocess.run(["ip", "-4", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
+        ipv4_result_output = ipv4_result.stdout
+        ### Extract the IP address using regular expression
+        ipv4_address_match = re.search(r'inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', ipv4_result_output)
+        if ipv4_address_match:
+            ipv4_address = ipv4_address_match.group(1)
+            print("IPv4 Address:", '\033[34m'+ipv4_address+'\033[0m')
+        else:
+            print("IPv4 Address not found.")
+        ### Extract the default gateway using regular expression
+        ipv4_interface = ipaddress.ip_interface(ipv4_address)
+        ipv4_default_gateway = ipv4_interface.network.network_address + 1 # defaultgateway is network address + 1
+        print("IPv4 Default Gateway:", '\033[34m'+str(ipv4_default_gateway)+'\033[0m')
 
-class DropCheck():
-	def __init__(self):
-		self.OS_NAME = OS_NAME
-    
-	def check_ip_address(self):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
+        ### ipv6 address check
+        ipv6_result = subprocess.run(["ip", "-6", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
+        ipv6_result_output = ipv6_result.stdout
+        ### Extract the IP address using regular expression
+        ipv6_address_match = re.search(r'inet6 ([0-9a-fA-F:]+/\d{1,3})', ipv6_result_output)
+        if ipv6_address_match:
+            ipv6_address = ipv6_address_match.group(1)
+            print("IPv6 Address:", '\033[34m'+ipv6_address+'\033[0m')
+        else:
+            print("IPv6 Address not found.")
+        ### Extract the default gateway using regular expression
+        ipv6_default_gateway = re.findall(r"([0-9a-fA-F:]+)", ipv6_result_output)
+        ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
+        print("IPv6 Default Gateway:", '\033[34m'+ipv6_default_gateway_address+'\033[0m')
+	
+    def ping_check_v4(self, PINGTARGET=None):
+        ### ping to default gateway
+        ipv4_result = subprocess.run(["ip", "-4", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
+        ipv4_result_output = ipv4_result.stdout
+        ipv4_address_match = re.search(r'inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', ipv4_result_output)
+        ipv4_address = ipv4_address_match.group(1)
+        ipv4_interface = ipaddress.ip_interface(ipv4_address)
+        ipv4_default_gateway = ipv4_interface.network.network_address + DEFAULT_GATEWAY_FOURTH_OCTET
+        if PINGTARGET is None:
+            PINGTARGET = ipv4_default_gateway
+        ping_result = os.system("ping -c " + str(PING_COUNT) + " -i " + str(PING_INTERVAL) + " " + str(PINGTARGET) + " > /dev/null")
+        if ping_result == 0:
+            print("Ping to", PINGTARGET, '\033[32m'+'OK'+'\033[0m')
+        else:
+            print("Ping to", PINGTARGET, '\033[31m'+'NG'+'\033[0m')
 
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			# ipv4 address check
-			ipv4_result = subprocess.run(["ip", "-4", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
-			ipv4_result_output = ipv4_result.stdout
+    def check_traceroute_v4(self, destination_ip):
+        result = subprocess.run(["sudo", "mtr", "-4", "-n", "-r", "-c" , str(TRACEROUTE_COUNT), "-i", str(TRACEROUTE_INTERVAL), destination_ip], capture_output=True, text=True)
+        ipaddresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result.stdout)
+        print("Traceroute to", destination_ip, "is", ipaddresses)
+        for ip in ipaddresses:
+            if ip in VIA_NW_DEVICES:
+                print("Via", VIA_NW_DEVICES[ip], ":", ip)
+            else:
+                continue
+	
+    def check_traceroute_v6(self, destination_ip):
+        result = subprocess.run(["sudo", "mtr", "-6", "-n", "-r", "-c" , str(TRACEROUTE_COUNT), "-i", str(TRACEROUTE_INTERVAL), destination_ip], capture_output=True, text=True)
+        ipaddresses = re.findall(r'\b(?:[0-9a-fA-F:]+)\b', result.stdout)
+        print("Traceroute to", destination_ip, "is", ipaddresses)
+        for ip in ipaddresses:
+            if ip in VIA_NW_DEVICES:
+                print("Via", VIA_NW_DEVICES[ip], ":", ip)
+            else:
+                continue
+	
+    def check_dns_a(self, DOMAIN_NAME, DNS_SERVER=None):
+        print(DOMAIN_NAME + " DNS resolution check")
+        subprocess.run(["killall", "-HUP", "mDNSResponder"])
+        if DNS_SERVER is None:
+            result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
+            if result.stdout != b"":
+                print("IPv4DNS resolution to", DOMAIN_NAME, '\033[32m' + 'OK' + '\033[0m')
+                print("IPAddress:", result.stdout.decode('utf-8').strip())
+            else:
+                print("IPv4DNS resolution to", DOMAIN_NAME, '\033[31m' + 'NG' + '\033[0m')
+        else:
+            result = subprocess.run(["dig", DOMAIN_NAME, "A", "@" + DNS_SERVER, "+short"], stdout=subprocess.PIPE)
+            if result.stdout != b"":
+                print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m' + 'OK' + '\033[0m')
+                print("IPAddress:", result.stdout.decode('utf-8').strip())
+            else:
+                print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m' + 'NG' + '\033[0m')
 
-			# Extract the IP address using regular expression
-			ipv4_address_match = re.search(r'inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', ipv4_result_output)
-			if ipv4_address_match:
-				ipv4_address = ipv4_address_match.group(1)
-				print("IPv4 Address:", '\033[34m'+ipv4_address+'\033[0m')
-			else:
-				print("IPv4 Address not found.")
-			# Extract the default gateway using regular expression
-			ipv4_interface = ipaddress.ip_interface(ipv4_address)
-			ipv4_default_gateway = ipv4_interface.network.network_address + 1
-			print("IPv4 Default Gateway:", '\033[34m'+str(ipv4_default_gateway)+'\033[0m')
+    def check_dns_aaaa(self, DOMAIN_NAME, DNS_SERVER=None):
+        subprocess.run(["killall", "-HUP", "mDNSResponder"])
+        ### DNS resolution check
+        if DNS_SERVER is None:
+            result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "+short"], stdout=subprocess.PIPE)
+            if result.stdout != b"":
+                print("IPv6DNS resolution to", DOMAIN_NAME, '\033[32m' + 'OK' + '\033[0m')
+            else:
+                print("IPv6DNS resolution to", DOMAIN_NAME, '\033[31m' + 'NG' + '\033[0m')
+        else:
+            result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "@" + DNS_SERVER, "+short"], stdout=subprocess.PIPE)
+            if result.stdout != b"":
+                print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m' + 'OK' + '\033[0m')
+            else:
+                print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m' + 'NG' + '\033[0m')
 
-			# ipv6 address check
-			ipv6_result = subprocess.run(["ip", "-6", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
-			ipv6_result_output = ipv6_result.stdout
+    def check_http(self, DOMAIN_NAME):
+        response = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", DOMAIN_NAME],
+                                  capture_output=True, text=True)
+        if response.stdout == "200":
+            print("HTTP to", DOMAIN_NAME, '\033[32m' + 'OK' + '\033[0m')
+        else:
+            print("HTTP to", DOMAIN_NAME, '\033[31m' + 'NG' + '\033[0m')
 
-			# Extract the IP address using regular expression
-			ipv6_address_match = re.search(r'inet6 ([0-9a-fA-F:]+/\d{1,3})', ipv6_result_output)
-			if ipv6_address_match:
-				ipv6_address = ipv6_address_match.group(1)
-				print("IPv6 Address:", '\033[34m'+ipv6_address+'\033[0m')
-			else:
-				print("IPv6 Address not found.")
+    def process(self):
+        """Mac OS専用の処理"""
+        print("Running macOS-specific process")
+        self.is_brew_package_installed("iproute2mac")
+        self.is_brew_package_installed("mtr")
+        print("------------ip address------------")
+        self.check_ip_address(ADAPTER_NAME)
+        print(" ")
+        print("------------ping------------")
+        self.ping_check_v4() #ping to default gateway
+        for PING_TARGET in PING_TARGETS:
+            self.ping_check_v4(PING_TARGET)
+        print(" ")
+        print("------------traceroute------------")
+        for TRACEROUTE_TARGET in TRACEROUTE_TARGETS:
+            self.check_traceroute_v4(TRACEROUTE_TARGET)
+        print(" ")
+        print("------------dns------------")
+        for DOMAIN_A_RECORD in DOMAIN_A_RECORDS:
+            self.check_dns_a(DOMAIN_A_RECORD)
+        for DOMAIN_AAAA_RECORD in DOMAIN_AAAA_RECORDS:
+            self.check_dns_aaaa(DOMAIN_AAAA_RECORD)
+        print(" ")
+        print("------------http------------")
+        for HTTP_TARGET in HTTP_TARGETS:
+            self.check_http(HTTP_TARGET)
 
-			# Extract the default gateway using regular expression
-			ipv6_default_gateway = re.findall(r"([0-9a-fA-F:]+)", ipv6_result_output)
-			ipv6_default_gateway_address = ipv6_default_gateway[0] if ipv6_default_gateway else "Not found"
-			print("IPv6 Default Gateway:", '\033[34m'+ipv6_default_gateway_address+'\033[0m')
+class WindowsOs:
+    ### Functions for Windows
+    def process(self):
+        """Windows専用の処理"""
+        print("Running Windows-specific process")
+        print("------------ip address------------")
+        print(" ")
+        print("------------ping------------")
+        print(" ")
+        print("------------traceroute------------")
+        print(" ")
+        print("------------dns------------")
+        print(" ")
+        print("------------http------------")
 
-		else:
-			print("Not supported OS.")
-			exit()
+class LinuxOs:
+    ### Functions for Linux
+    def process(self):
+        """Linux専用の処理"""
+        print("Running Linux-specific process")
+        print("------------ip address------------")
+        print(" ")
+        print("------------ping------------")
+        print(" ")
+        print("------------traceroute------------")
+        print(" ")
+        print("------------dns------------")
+        print(" ")
+        print("------------http------------")
 
-		# ping check module	
-	def check_ping_v4(self, PING_TARGET=None):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
+class OsHandler:
+    def __init__(self):
+        self.os = platform.system()
+        if self.os == "Darwin":
+            self.os = MacOs()
+        elif self.os == "Windows":
+            self.os = WindowsOs()
+        elif self.os == "Linux":
+            self.os = LinuxOs()
+        else:
+            print("Error: Unsupported OS.")
+            exit()
 
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			# ping to default gateway
-			ipv4_result = subprocess.run(["ip", "-4", "addr", "show", ADAPTER_NAME], capture_output=True, text=True)
-			ipv4_result_output = ipv4_result.stdout
-			ipv4_address_match = re.search(r'inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', ipv4_result_output)
-			ipv4_address = ipv4_address_match.group(1)
-			ipv4_interface = ipaddress.ip_interface(ipv4_address)
-			ipv4_default_gateway = ipv4_interface.network.network_address + 1
-
-			if PING_TARGET is None:
-				PING_TARGET = ipv4_default_gateway
-				
-			ping_gateway_result = os.system("ping -c " + str(ICMP_COUNT) + " -i " + str(ICMP_INTERVAL) + " " + str(PING_TARGET) + " > /dev/null")
-			if ping_gateway_result == 0:
-				print("Ping to", PING_TARGET, '\033[32m'+'OK'+'\033[0m')
-			else:
-				print("Ping to", PING_TARGET, '\033[31m'+'NG'+'\033[0m')
-		
-		else:
-			print("Not supported OS.")
-			exit()
-
-	# traceroute check module
-	def check_traceroute_v4(self, destination_ip):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			result = subprocess.run(["sudo", "mtr", "-4", "-n", "-r", "-c" , TRACEROUTE_COUNT, "-i", TRACEROUTE_INTERVAL, destination_ip], capture_output=True, text=True)
-			ip_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result.stdout)
-			print("Traceroute to", destination_ip, "is", ip_addresses)
-			for ip in ip_addresses:
-				if ip in VIA_NW_DEVICES:
-					print("Via", VIA_NW_DEVICES[ip], ":", ip)
-			else:
-				print("Trace complete.")
-
-		else:
-			print("Not supported OS.")
-			exit()
-
-	def check_traceroute_v6(self, destination_ip):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			result = subprocess.run(["sudo", "mtr", "-6", "-n", "-r", "-c" , TRACEROUTE_COUNT, "-i", TRACEROUTE_INTERVAL, destination_ip], capture_output=True, text=True)
-			ip_addresses = re.findall(r'\b(?:[0-9a-fA-F:]+)\b', result.stdout)
-			print("Traceroute to", destination_ip, "is", ip_addresses)
-			for ip in ip_addresses:
-				if ip in VIA_NW_DEVICES:
-					print("Via", VIA_NW_DEVICES[ip], ":", ip)
-			else:
-				print("Trace complete.")
-
-		else:
-			print("Not supported OS.")
-			exit()
-
-	# dns check module
-	def check_dns_a(self, DOMAIN_NAME, DNS_SERVER=None):
-		if OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
-
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			if self.OS_NAME == "Darwin":
-				#DNS cache clear for macos
-				print("Clearing DNS cache...")
-				subprocess.run(["killall", "-HUP", "mDNSResponder"])
-				print("DNS cache cleared.")
-
-			#DNS resolution check
-			if DNS_SERVER is None:
-				result = subprocess.run(["dig", DOMAIN_NAME, "A", "+short"], stdout=subprocess.PIPE)
-				if result.stdout != b"":
-					print("IPv4DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
-				else:
-					print("IPv4DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
-			else:
-				result = subprocess.run(["dig", DOMAIN_NAME, "A", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
-				if result.stdout != b"":
-					print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
-				else:
-					print("IPv4DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
-
-		else:
-			print("Not supported OS.")
-			exit()
-
-	def check_dns_aaaa(self, DOMAIN_NAME, DNS_SERVER=None):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
-
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			if self.OS_NAME == "Darwin":
-				#DNS cache clear for macos
-				print("Clearing DNS cache...")
-				subprocess.run(["killall", "-HUP", "mDNSResponder"])
-				print("DNS cache cleared.")
-
-			#DNS resolution check
-			if DNS_SERVER is None:
-				result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "+short"], stdout=subprocess.PIPE)
-				if result.stdout != b"":
-					print("IPv6DNS resolution to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
-				else:
-					print("IPv6DNS resolution to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
-			else:
-				result = subprocess.run(["dig", DOMAIN_NAME, "AAAA", "@"+DNS_SERVER,"+short"], stdout=subprocess.PIPE)
-				if result.stdout != b"":
-					print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[32m'+'OK'+'\033[0m')
-				else:
-					print("IPv6DNS resolution to", DOMAIN_NAME, "with", DNS_SERVER, '\033[31m'+'NG'+'\033[0m')
-
-		else:
-			print("Not supported OS.")
-			exit()
-
-	def check_http(self, DOMAIN_NAME):
-		if self.OS_NAME == "Windows":
-			print("Not supported OS.")
-			exit()
-		
-		elif self.OS_NAME == "Darwin" or self.OS_NAME == "Linux":
-			response = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", DOMAIN_NAME], capture_output=True, text=True)
-			if response.stdout == "200":
-				print("HTTP to", DOMAIN_NAME, '\033[32m'+'OK'+'\033[0m')
-			else:
-				print("HTTP to", DOMAIN_NAME, '\033[31m'+'NG'+'\033[0m')
-
-		else:
-			print("Not supported OS.")
-			exit()
-
-	def process(self):
-		if self.OS_NAME == "Darwin":
-			if not is_brew_package_installed("iproute2mac"):
-				print("Error: iproute2mac module not found.")
-				exit()
-			if not is_brew_package_installed("mtr"):
-				print("Error: mtr module not found.")
-				exit()
-		print("------------ip address------------")
-		# print interface name for macOS and Linux
-		if OS_NAME == "Darwin" or OS_NAME == "Linux":
-			print("Interface:", ADAPTER_NAME)
-		self.check_ip_address()
-		print(" ")
-		print("------------ping------------")
-		self.check_ping_v4() #ping to default gateway
-		self.check_ping_v4(GOOGLE_DNS_IPV4)
-		self.check_ping_v4(CLOUDFLARE_DNS_IPV4)
-		print(" ")
-		print("------------traceroute------------")
-		self.check_traceroute_v4(GOOGLE_DNS_IPV4)
-		print(" ")
-		print("------------dns------------")
-		self.check_dns_a(YAHOO_DOMAIN)
-		self.check_dns_a(GOOGLE_DOMAIN)
-		self.check_dns_a(GOOGLE_DOMAIN, GOOGLE_DNS_IPV4)
-		self.check_dns_aaaa(GOOGLE_DOMAIN , GOOGLE_DNS_IPV6)
-		print(" ")
-		print("------------http------------")
-		self.check_http(GOOGLE_IPV4)
-		self.check_http(GOOGLE_IPV6)
+    def process(self):
+        self.os.process()
 
 # main precedure
 def main():
