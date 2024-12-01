@@ -1,14 +1,11 @@
 #!/usr/bin/python3
 # coding by junenu(june@wanpachi.dev)
 
-import re
+import argparse
+import ipaddress
 import os
 import platform
-import subprocess
-import argparse
 import re
-import ipaddress
-
 # global variables
 OS_NAME = platform.system()
 
@@ -39,8 +36,11 @@ GOOGLE_DOMAIN = "google.com"
 # http check parameters
 GOOGLE_IPV4 = "https://ipv4.google.com"
 GOOGLE_IPV6 = "https://ipv6.google.com"
+import subprocess
 
 # argument parser
+import yaml
+
 parser = argparse.ArgumentParser(description='Check network status.')
 parser.add_argument('adapter_name', help='Adapter name')
 args = parser.parse_args()
