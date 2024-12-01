@@ -1,0 +1,25 @@
+# ICMP parameters
+PING_COUNT: 3
+PING_INTERVAL: 0.5
+PING_TARGETS:
+  - '8.8.8.8'
+  - '8.8.4.4'
+
+# Traceroute parameters
+TRACEROUTE_COUNT: 5
+TRACEROUTE_INTERVAL: 0.1
+TRACEROUTE_TARGETS:
+  - '8.8.8.8'
+  - '8.8.4.4'
+
+# domain name
+DOMAIN_A_RECORDS:
+  - 'google.com'
+  - 'yahoo.com'
+DOMAIN_AAAA_RECORDS:
+  - 'google.com'
+  - 'yahoo.com'
+
+# http check parameters
+HTTP_IPV4_TARGET: https://ipv4.google.com
+HTTP_IPV6_TARGET: https://ipv6.google.com
