@@ -6,41 +6,36 @@ import ipaddress
 import os
 import platform
 import re
-# global variables
-OS_NAME = platform.system()
-
-# ping check parameters
-ICMP_INTERVAL = 0.5
-ICMP_COUNT = 3
-
-# ping destination
-CLOUDFLARE_DNS_IPV4 = "1.1.1.1"
-CLOUDFLARE_DNS_IPV6 = "2606:4700:4700::1111"
-
-# traceroute check parameters
-TRACEROUTE_COUNT = "5"
-TRACEROUTE_INTERVAL = "0.1"
-
-# DNS server
-GOOGLE_DNS_IPV4 = "8.8.8.8"
-PRIVATE_DNS_1 = "192.168.10.1"
-GOOGLE_DNS_IPV6 = "2001:4860:4860::8888"
-
-# Via NW devices
-VIA_NW_DEVICES = {"192.168.10.1":"Router"} 
-
-# domain name
-YAHOO_DOMAIN = "yahoo.com"
-GOOGLE_DOMAIN = "google.com"
-
-# http check parameters
-GOOGLE_IPV4 = "https://ipv4.google.com"
-GOOGLE_IPV6 = "https://ipv6.google.com"
 import subprocess
 
 # argument parser
 import yaml
 
+# Variables
+## FOO = config.get('FOO', 'default value')
+## Ping
+PING_COUNT = config.get('PING_COUNT', 3)
+PING_INTERVAL = config.get('PING_INTERVAL', 0.5)
+PING_TARGETS = config.get('PING_TARGETS', ['8.8.8.8', '8.8.4.4'])
+
+## Traceroute
+TRACEROUTE_COUNT = config.get('TRACEROUTE_COUNT', 5)
+TRACEROUTE_INTERVAL = config.get('TRACEROUTE_INTERVAL', 0.1)
+TRACEROUTE_TARGETS = config.get('TRACEROUTE_TARGETS', ['8.8.8.8'])
+VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
+
+## DNS
+DOMAIN_A_RECORDS = config.get('DOMAIN_A_RECORDS', ['www.yahoo.co.jp', 'www.google.com'])
+DOMAIN_AAAA_RECORDS = config.get('DOMAIN_AAAA_RECORDS', ['www.google.com'])
+
+## HTTP
+HTTP_IPV4_TARGET = config.get('HTTP_IPV4_TARGET', 'https://ipv4.google.com')
+HTTP_IPV6_TARGET = config.get('HTTP_IPV6_TARGET', 'https://ipv6.google.com')
+HTTP_TARGETS = [HTTP_IPV4_TARGET, HTTP_IPV6_TARGET]
+
+## Default Gateway Fourth Octet
+## Note: This is a fixed value. Please change as necessary.
+DEFAULT_GATEWAY_FOURTH_OCTET = config.get('DEFAULT_GATEWAY_FOURTH_OCTET', 1)
 parser = argparse.ArgumentParser(description='Check network status.')
 parser.add_argument('adapter_name', help='Adapter name')
 args = parser.parse_args()
