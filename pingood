@@ -214,35 +214,6 @@ def main():
 
     checker = get_net_checker()
     if_name = args.interface
-        else:
-            print("HTTP to", DOMAIN_NAME, '\033[31m' + 'NG' + '\033[0m')
-
-    def process(self):
-        """Mac OS専用の処理"""
-        print("Running macOS-specific process")
-        self.is_brew_package_installed("iproute2mac")
-        self.is_brew_package_installed("mtr")
-        print("------------ip address------------")
-        self.check_ip_address(ADAPTER_NAME)
-        print(" ")
-        print("------------ping------------")
-        self.ping_check_v4() #ping to default gateway
-        for PING_TARGET in PING_TARGETS:
-            self.ping_check_v4(PING_TARGET)
-        print(" ")
-        print("------------traceroute------------")
-        for TRACEROUTE_TARGET in TRACEROUTE_TARGETS:
-            self.check_traceroute_v4(TRACEROUTE_TARGET)
-        print(" ")
-        print("------------dns------------")
-        for DOMAIN_A_RECORD in DOMAIN_A_RECORDS:
-            self.check_dns_a(DOMAIN_A_RECORD)
-        for DOMAIN_AAAA_RECORD in DOMAIN_AAAA_RECORDS:
-            self.check_dns_aaaa(DOMAIN_AAAA_RECORD)
-        print(" ")
-        print("------------http------------")
-        for HTTP_TARGET in HTTP_TARGETS:
-            self.check_http(HTTP_TARGET)
 
 class WindowsOs:
     ### Functions for Windows
