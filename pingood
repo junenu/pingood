@@ -2,13 +2,12 @@
 # coding by junenu(june@uruu-ru.net)
 
 import argparse
-import ipaddress
-import os
 import platform
-import re
 import subprocess
-
+import re
+import requests
 import yaml
+from abc import ABC, abstractmethod
 
 # Load configuration from conf.yaml
 def load_config(file_path):
