@@ -40,11 +40,6 @@ TRACEROUTE_TARGET = config.get('TRACEROUTE_TARGET', '8.8.8.8')
 VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
 
 
-# Argument parser
-parser = argparse.ArgumentParser(description='Check network status.')
-parser.add_argument('adapter_name', help='Adapter name')
-args = parser.parse_args()
-ADAPTER_NAME = args.adapter_name
 
 class MacOs:
     # Functions for macOS
@@ -164,6 +159,12 @@ class MacOs:
                                   capture_output=True, text=True)
         if response.stdout == "200":
             print("HTTP to", DOMAIN_NAME, '\033[32m' + 'OK' + '\033[0m')
+    parser = argparse.ArgumentParser(description='Network check tool')
+    parser.add_argument('interface', help='Interface name (e.g. en0, eth0)')
+    args = parser.parse_args()
+
+    checker = get_net_checker()
+    if_name = args.interface
         else:
             print("HTTP to", DOMAIN_NAME, '\033[31m' + 'NG' + '\033[0m')
 
