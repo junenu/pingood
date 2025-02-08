@@ -1,6 +1,12 @@
-# echotrack
+# pingood
 
 ## Usage
+
+### common
+
+```
+pip install requests
+```
 
 ### windows
 
@@ -8,10 +14,9 @@
 To be continued
 ```
 
-### mac
+### mac(optional)
 
 ```
-brew install iproute2mac
 brew install mtr
 ```
 
