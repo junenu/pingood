@@ -39,12 +39,45 @@ TRACEROUTE_INTERVAL = config.get('TRACEROUTE_INTERVAL', 0.1)
 TRACEROUTE_TARGET = config.get('TRACEROUTE_TARGET', '8.8.8.8')
 VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
 
+class NetCheckBase(ABC):
+    """
+    Abstract base class for IPv4/IPv6.
+    Methods that can specify the interface name as an argument.
+    """
 
+    @abstractmethod
+    def get_ip_address_v4(self, interface: str) -> str:
+        pass
 
 class MacOs:
     # Functions for macOS
     ## Check if the package is installed
     def is_brew_package_installed(self, package_name):
+    @abstractmethod
+    def get_ip_address_v6(self, interface: str) -> str:
+        pass
+
+    @abstractmethod
+    def get_default_gateway_v4(self, interface: str) -> str:
+        pass
+
+    @abstractmethod
+    def get_default_gateway_v6(self, interface: str) -> str:
+        pass
+
+    @abstractmethod
+    def ping_host(self, host: str, family: str = 'ipv4') -> bool:
+        pass
+
+    @abstractmethod
+    def traceroute_host(self, host: str, family: str = 'ipv4') -> str:
+        pass
+
+    @abstractmethod
+    def dns_lookup(self, domain: str, dns_server: str = None, record_type: str = 'A') -> str:
+        pass
+
+    def http_check(self, url: str) -> bool:
         try:
             installed_packages = subprocess.check_output(['brew', 'list'], text=True)
             if not package_name in installed_packages:
@@ -97,6 +130,17 @@ class MacOs:
         ping_result = os.system("ping -c " + str(PING_COUNT) + " -i " + str(PING_INTERVAL) + " " + str(PINGTARGET) + " > /dev/null")
         if ping_result == 0:
             print("Ping to", PINGTARGET, '\033[32m'+'OK'+'\033[0m')
+            with requests.get(url, timeout=5) as response:
+                status = response.status_code
+                if 200 <= status < 300:
+                    print(f'\033[32m OK \033[0m {url} -> {status}')
+                    return True
+                else:
+                    print(f'\033[31m NG \033[0m {url} -> {status}')
+        except Exception:
+            print(f'\033[31m NG \033[0m {url}')
+        return False
+
         else:
             print("Ping to", PINGTARGET, '\033[31m'+'NG'+'\033[0m')
 
