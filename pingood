@@ -215,16 +215,61 @@ def main():
     checker = get_net_checker()
     if_name = args.interface
 
+    # IP address
+    print("------------ip address------------")
+    # IPv4 address & gateway
+    ip4 = checker.get_ip_address_v4(interface=if_name)
+    gw4 = checker.get_default_gateway_v4(interface=if_name)
+    print(f'[{if_name}] IPv4: {ip4}, GW={gw4}')
+    # IPv6 address & gateway
+    ip6 = checker.get_ip_address_v6(interface=if_name)
+    gw6 = checker.get_default_gateway_v6(interface=if_name)
+    print(f'[{if_name}] IPv6: {ip6}, GW={gw6}')
+
+    # Ping
+    print("---------------ping---------------")
+    # Ping (v4)
+    if gw4 and checker.ping_host(gw4, family='ipv4'):
+        print(f'\033[32m OK \033[0m Ping GW IPv4 {gw4}')
+    else:
+        print(f'\033[31m NG \033[0m Ping GW IPv4 {gw4}')
+        print('IPv4 GW not reachable. Check the network configuration.')
+    for target in PING_TARGETS_IPV4:
+        if checker.ping_host(target, family='ipv4'):
+            print(f'\033[32m OK \033[0m Ping IPv4 {target}')
         else:
+            print(f'\033[31m NG \033[0m Ping IPv4 {target}')
+    # Ping (v6)
+    if ip6 and checker.ping_host(ip6, family='ipv6'):
+        print(f'\033[32m OK \033[0m Ping self IPv6 {ip6}')
+    if gw6 and checker.ping_host(gw6, family='ipv6'):
+        print(f'\033[32m OK \033[0m Ping GW IPv6 {gw6}')
+    else:
+        print(f'\033[31m NG \033[0m Ping GW IPv6 {gw6}')
+        print('IPv6 GW not reachable. Check the network configuration.')
+    for target in PING_TARGETS_IPV6:
+        if checker.ping_host(target, family='ipv6'):
+            print(f'\033[32m OK \033[0m Ping IPv6 {target}')
+        else:
+            print(f'\033[31m NG \033[0m Ping IPv6 {target}')
 
-    def process(self):
-        self.os.process()
+    # DNS
+    print("---------------dns----------------")
+    for domain in DOMAIN_A_RECORDS:
+        checker.dns_lookup(domain)
+    for domain in DOMAIN_AAAA_RECORDS:
+        checker.dns_lookup(domain, record_type='AAAA')
 
-# main precedure
-def main():
-    os_handler = OsHandler()
-    os_handler.process()
+    print("---------------http----------------")
+    # HTTP
+    checker.http_check(HTTP_IPV4_TARGET)
+    checker.http_check(HTTP_IPV6_TARGET)
 
-# main
-if __name__ == "__main__":
+    print("------------traceroute--------------")
+    # traceroute
+    tr_v4 = checker.traceroute_host(TRACEROUTE_TARGET, family='ipv4')
+    print(tr_v4)
+
+
+if __name__ == '__main__':
     main()
