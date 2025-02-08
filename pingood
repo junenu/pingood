@@ -21,13 +21,8 @@ config = load_config('conf.yaml')
 ## Ping
 PING_COUNT = config.get('PING_COUNT', 3)
 PING_INTERVAL = config.get('PING_INTERVAL', 0.5)
-PING_TARGETS = config.get('PING_TARGETS', ['8.8.8.8', '8.8.4.4'])
-
-## Traceroute
-TRACEROUTE_COUNT = config.get('TRACEROUTE_COUNT', 5)
-TRACEROUTE_INTERVAL = config.get('TRACEROUTE_INTERVAL', 0.1)
-TRACEROUTE_TARGETS = config.get('TRACEROUTE_TARGETS', ['8.8.8.8'])
-VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
+PING_TARGETS_IPV4 = config.get('PING_TARGETS_IPV4', ['8.8.8.8', '8.8.4.4'])
+PING_TARGETS_IPV6 = config.get('PING_TARGETS_IPV6', ['2001:4860:4860::8888', '2001:4860:4860::8844'])
 
 ## DNS
 DOMAIN_A_RECORDS = config.get('DOMAIN_A_RECORDS', ['www.yahoo.co.jp', 'www.google.com'])
@@ -38,9 +33,12 @@ HTTP_IPV4_TARGET = config.get('HTTP_IPV4_TARGET', 'https://ipv4.google.com')
 HTTP_IPV6_TARGET = config.get('HTTP_IPV6_TARGET', 'https://ipv6.google.com')
 HTTP_TARGETS = [HTTP_IPV4_TARGET, HTTP_IPV6_TARGET]
 
-## Default Gateway Fourth Octet
-## Note: This is a fixed value. Please change as necessary.
-DEFAULT_GATEWAY_FOURTH_OCTET = config.get('DEFAULT_GATEWAY_FOURTH_OCTET', 1)
+## Traceroute
+TRACEROUTE_COUNT = config.get('TRACEROUTE_COUNT', 5)
+TRACEROUTE_INTERVAL = config.get('TRACEROUTE_INTERVAL', 0.1)
+TRACEROUTE_TARGET = config.get('TRACEROUTE_TARGET', '8.8.8.8')
+VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
+
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Check network status.')
