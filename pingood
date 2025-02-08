@@ -215,36 +215,6 @@ def main():
     checker = get_net_checker()
     if_name = args.interface
 
-class WindowsOs:
-    ### Functions for Windows
-    def process(self):
-        """Windows専用の処理"""
-        print("Running Windows-specific process")
-        print("------------ip address------------")
-        print(" ")
-        print("------------ping------------")
-        print(" ")
-        print("------------traceroute------------")
-        print(" ")
-        print("------------dns------------")
-        print(" ")
-        print("------------http------------")
-
-class LinuxOs:
-    ### Functions for Linux
-    def process(self):
-        """Linux専用の処理"""
-        print("Running Linux-specific process")
-        print("------------ip address------------")
-        print(" ")
-        print("------------ping------------")
-        print(" ")
-        print("------------traceroute------------")
-        print(" ")
-        print("------------dns------------")
-        print(" ")
-        print("------------http------------")
-
         else:
 
     def process(self):
