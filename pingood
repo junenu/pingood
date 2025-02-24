@@ -9,35 +9,41 @@ import requests
 import yaml
 from abc import ABC, abstractmethod
 
+
 # Load configuration from conf.yaml
 def load_config(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         config = yaml.safe_load(file)
     return config
-config = load_config('conf.yaml')
+
+
+config = load_config("conf.yaml")
 
 # Variables
 ## FOO = config.get('FOO', 'default value')
 ## Ping
-PING_COUNT = config.get('PING_COUNT', 3)
-PING_INTERVAL = config.get('PING_INTERVAL', 0.5)
-PING_TARGETS_IPV4 = config.get('PING_TARGETS_IPV4', ['8.8.8.8', '8.8.4.4'])
-PING_TARGETS_IPV6 = config.get('PING_TARGETS_IPV6', ['2001:4860:4860::8888', '2001:4860:4860::8844'])
+PING_COUNT = config.get("PING_COUNT", 3)
+PING_INTERVAL = config.get("PING_INTERVAL", 0.5)
+PING_TARGETS_IPV4 = config.get("PING_TARGETS_IPV4", ["8.8.8.8", "8.8.4.4"])
+PING_TARGETS_IPV6 = config.get(
+    "PING_TARGETS_IPV6", ["2001:4860:4860::8888", "2001:4860:4860::8844"]
+)
 
 ## DNS
-DOMAIN_A_RECORDS = config.get('DOMAIN_A_RECORDS', ['www.yahoo.co.jp', 'www.google.com'])
-DOMAIN_AAAA_RECORDS = config.get('DOMAIN_AAAA_RECORDS', ['www.google.com'])
+DOMAIN_A_RECORDS = config.get("DOMAIN_A_RECORDS", ["www.yahoo.co.jp", "www.google.com"])
+DOMAIN_AAAA_RECORDS = config.get("DOMAIN_AAAA_RECORDS", ["www.google.com"])
 
 ## HTTP
-HTTP_IPV4_TARGET = config.get('HTTP_IPV4_TARGET', 'https://ipv4.google.com')
-HTTP_IPV6_TARGET = config.get('HTTP_IPV6_TARGET', 'https://ipv6.google.com')
+HTTP_IPV4_TARGET = config.get("HTTP_IPV4_TARGET", "https://ipv4.google.com")
+HTTP_IPV6_TARGET = config.get("HTTP_IPV6_TARGET", "https://ipv6.google.com")
 HTTP_TARGETS = [HTTP_IPV4_TARGET, HTTP_IPV6_TARGET]
 
 ## Traceroute
-TRACEROUTE_COUNT = config.get('TRACEROUTE_COUNT', 5)
-TRACEROUTE_INTERVAL = config.get('TRACEROUTE_INTERVAL', 0.1)
-TRACEROUTE_TARGET = config.get('TRACEROUTE_TARGET', '8.8.8.8')
-VIA_NW_DEVICES = config.get('VIA_NW_DEVICES', {'192.168.10.1': 'Router1'})
+TRACEROUTE_COUNT = config.get("TRACEROUTE_COUNT", 5)
+TRACEROUTE_INTERVAL = config.get("TRACEROUTE_INTERVAL", 0.1)
+TRACEROUTE_TARGET = config.get("TRACEROUTE_TARGET", "8.8.8.8")
+VIA_NW_DEVICES = config.get("VIA_NW_DEVICES", {"192.168.10.1": "Router1"})
+
 
 class NetCheckBase(ABC):
     """
@@ -62,15 +68,17 @@ class NetCheckBase(ABC):
         pass
 
     @abstractmethod
-    def ping_host(self, host: str, family: str = 'ipv4') -> bool:
+    def ping_host(self, host: str, family: str = "ipv4") -> bool:
         pass
 
     @abstractmethod
-    def traceroute_host(self, host: str, family: str = 'ipv4') -> str:
+    def traceroute_host(self, host: str, family: str = "ipv4") -> str:
         pass
 
     @abstractmethod
-    def dns_lookup(self, domain: str, dns_server: str = None, record_type: str = 'A') -> str:
+    def dns_lookup(
+        self, domain: str, dns_server: str = None, record_type: str = "A"
+    ) -> str:
         pass
 
     def http_check(self, url: str) -> bool:
@@ -78,43 +86,43 @@ class NetCheckBase(ABC):
             with requests.get(url, timeout=5) as response:
                 status = response.status_code
                 if 200 <= status < 300:
-                    print(f'\033[32m OK \033[0m {url} -> {status}')
+                    print(f"\033[32m OK \033[0m {url} -> {status}")
                     return True
                 else:
-                    print(f'\033[31m NG \033[0m {url} -> {status}')
+                    print(f"\033[31m NG \033[0m {url} -> {status}")
         except Exception:
-            print(f'\033[31m NG \033[0m {url}')
+            print(f"\033[31m NG \033[0m {url}")
         return False
 
 
 class MacNetCheck(NetCheckBase):
 
     def get_ip_address_v4(self, interface: str) -> str:
-        cmd_ifconfig = ['ifconfig', interface]
+        cmd_ifconfig = ["ifconfig", interface]
         result = subprocess.run(cmd_ifconfig, capture_output=True, text=True)
         if result.returncode == 0:
-            match = re.search(r'inet\s+([\d\.]+)\s+netmask', result.stdout)
+            match = re.search(r"inet\s+([\d\.]+)\s+netmask", result.stdout)
             if match:
                 return match.group(1)
         return None
 
     def get_ip_address_v6(self, interface: str) -> str:
-        cmd_ifconfig = ['ifconfig', interface]
+        cmd_ifconfig = ["ifconfig", interface]
         result = subprocess.run(cmd_ifconfig, capture_output=True, text=True)
         if result.returncode == 0:
-            match = re.search(r'inet6\s+([0-9a-fA-F:]+)\s+prefixlen', result.stdout)
+            match = re.search(r"inet6\s+([0-9a-fA-F:]+)\s+prefixlen", result.stdout)
             if match:
                 return match.group(1)
         return None
 
     def get_default_gateway_v4(self, interface: str) -> str:
-        cmd_netstat = ['netstat', '-rn', '-f', 'inet']
+        cmd_netstat = ["netstat", "-rn", "-f", "inet"]
         result = subprocess.run(cmd_netstat, capture_output=True, text=True)
         if result.returncode == 0:
             lines = result.stdout.splitlines()
             # "default            192.168.10.1       UGScg                 en0 "
             for line in lines:
-                if line.startswith('default'):
+                if line.startswith("default"):
                     cols = line.split()
                     if len(cols) >= 3:
                         gw = cols[1]
@@ -123,72 +131,109 @@ class MacNetCheck(NetCheckBase):
         return None
 
     def get_default_gateway_v6(self, interface: str) -> str:
-        cmd_netstat = ['netstat', '-rn', '-f', 'inet6']
+        cmd_netstat = ["netstat", "-rn", "-f", "inet6"]
         result = subprocess.run(cmd_netstat, capture_output=True, text=True)
         if result.returncode == 0:
             lines = result.stdout.splitlines()
             # "default                                 fe80::1%en0   UGcI           en0"
             for line in lines:
-                if line.strip().startswith('default'):
+                if line.strip().startswith("default"):
                     cols = line.split()
                     if len(cols) >= 2:
                         gw = cols[1]
                         if interface in cols:
-                            return gw.split('%')[0]  # fe80::1%en0 -> fe80::1
+                            return gw.split("%")[0]  # fe80::1%en0 -> fe80::1
         return None
 
-    def ping_host(self, host: str, family: str = 'ipv4') -> bool:
-        if family == 'ipv6':
-            cmd = ['ping6', '-c', str(PING_COUNT), '-i', str(PING_INTERVAL), host]
+    def ping_host(self, host: str, family: str = "ipv4") -> bool:
+        if family == "ipv6":
+            cmd = ["ping6", "-c", str(PING_COUNT), "-i", str(PING_INTERVAL), host]
         else:
-            cmd = ['ping', '-c', str(PING_COUNT), '-i', str(PING_INTERVAL), host]
+            cmd = ["ping", "-c", str(PING_COUNT), "-i", str(PING_INTERVAL), host]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        return (result.returncode == 0)
+        return result.returncode == 0
 
-    def traceroute_host(self, host: str, family: str = 'ipv4') -> str:
+    def traceroute_host(self, host: str, family: str = "ipv4") -> str:
         def check_command_exist(command: str) -> bool:
             try:
-                subprocess.run(['which', command], check=True, capture_output=True)
+                subprocess.run(["which", command], check=True, capture_output=True)
                 return True
             except subprocess.CalledProcessError:
                 return False
 
-        use_mtr = check_command_exist('mtr')
+        use_mtr = check_command_exist("mtr")
         if use_mtr:
-            if family == 'ipv6':
-                cmd = ['sudo', 'mtr', '-n', '-c', str(TRACEROUTE_COUNT), '-6', '-r', '-i', str(TRACEROUTE_INTERVAL), host]
+            if family == "ipv6":
+                cmd = [
+                    "sudo",
+                    "mtr",
+                    "-n",
+                    "-c",
+                    str(TRACEROUTE_COUNT),
+                    "-6",
+                    "-r",
+                    "-i",
+                    str(TRACEROUTE_INTERVAL),
+                    host,
+                ]
             else:
-                cmd = ['sudo', 'mtr', '-n', '-c', '3', '-r', '-i', str(TRACEROUTE_INTERVAL), host]
+                cmd = [
+                    "sudo",
+                    "mtr",
+                    "-n",
+                    "-c",
+                    "3",
+                    "-r",
+                    "-i",
+                    str(TRACEROUTE_INTERVAL),
+                    host,
+                ]
         else:
-            if family == 'ipv6':
-                cmd = ['traceroute6', host]
+            if family == "ipv6":
+                cmd = ["traceroute6", host]
             else:
-                cmd = ['traceroute', host]
+                cmd = ["traceroute", host]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         output = result.stdout
         for dev_name, dev_ip in VIA_NW_DEVICES.items():
             if dev_ip in output:
-                print(f'\033[32m OK \033[0m 指定ルーター {dev_name} {dev_ip} を通過')
+                print(f"\033[32m OK \033[0m 指定ルーター {dev_name} {dev_ip} を通過")
             else:
-                print(f'\033[31m NG \033[0m 指定ルーター {dev_name} {dev_ip} は含まれていません')
+                print(
+                    f"\033[31m NG \033[0m 指定ルーター {dev_name} {dev_ip} は含まれていません"
+                )
         return output
 
-    def dns_lookup(self, domain: str, dns_server: str = None, record_type: str = 'A') -> None:
+    def dns_lookup(
+        self, domain: str, dns_server: str = None, record_type: str = "A"
+    ) -> None:
         if dns_server is None:
-            cmd = ['dig', domain, record_type, '+short']
+            cmd = ["dig", domain, record_type, "+short"]
             result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.stdout != b'':
-                print(f'\033[32m OK \033[0m {record_type} record DNS resolution to {domain}')
+            if result.stdout != b"":
+                print(
+                    f"\033[32m OK \033[0m {record_type} record DNS resolution to"
+                    f" {domain}"
+                )
             else:
-                print(f'\033[31m NG \033[0m {record_type} record DNS resolution to {domain}')
+                print(
+                    f"\033[31m NG \033[0m {record_type} record DNS resolution to"
+                    f" {domain}"
+                )
         else:
-            cmd = ['dig', domain, record_type, '@' + dns_server, '+short']
+            cmd = ["dig", domain, record_type, "@" + dns_server, "+short"]
             result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.stdout != b'':
-                print(f'\033[32m OK \033[0m {record_type} record DNS resolution to {domain} with {dns_server}')
+            if result.stdout != b"":
+                print(
+                    f"\033[32m OK \033[0m {record_type} record DNS resolution to"
+                    f" {domain} with {dns_server}"
+                )
             else:
-                print(f'\033[31m NG \033[0m {record_type} record DNS resolution to {domain} with {dns_server}')
+                print(
+                    f"\033[31m NG \033[0m {record_type} record DNS resolution to"
+                    f" {domain} with {dns_server}"
+                )
 
 
 def get_os_type():
@@ -197,19 +242,19 @@ def get_os_type():
 
 def get_net_checker() -> NetCheckBase:
     os_type = get_os_type()
-    if os_type == 'Darwin':
+    if os_type == "Darwin":
         return MacNetCheck()
     # elif os_type == 'Windows':
     #     return WindowsNetCheck()
     # elif os_type == 'Linux':
     #     return LinuxNetCheck()
     else:
-        raise NotImplementedError(f'Unsupported OS: {os_type}')
+        raise NotImplementedError(f"Unsupported OS: {os_type}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Network check tool')
-    parser.add_argument('interface', help='Interface name (e.g. en0, eth0)')
+    parser = argparse.ArgumentParser(description="Network check tool")
+    parser.add_argument("interface", help="Interface name (e.g. en0, eth0)")
     args = parser.parse_args()
 
     checker = get_net_checker()
@@ -220,56 +265,56 @@ def main():
     # IPv4 address & gateway
     ip4 = checker.get_ip_address_v4(interface=if_name)
     gw4 = checker.get_default_gateway_v4(interface=if_name)
-    print(f'[{if_name}] IPv4: {ip4}, GW={gw4}')
+    print(f"[{if_name}] IPv4: {ip4}, GW={gw4}")
     # IPv6 address & gateway
     ip6 = checker.get_ip_address_v6(interface=if_name)
     gw6 = checker.get_default_gateway_v6(interface=if_name)
-    print(f'[{if_name}] IPv6: {ip6}, GW={gw6}')
+    print(f"[{if_name}] IPv6: {ip6}, GW={gw6}")
 
     # Ping
     print("---------------ping---------------")
     # Ping (v4)
-    if gw4 and checker.ping_host(gw4, family='ipv4'):
-        print(f'\033[32m OK \033[0m Ping GW IPv4 {gw4}')
+    if gw4 and checker.ping_host(gw4, family="ipv4"):
+        print(f"\033[32m OK \033[0m Ping GW IPv4 {gw4}")
     else:
-        print(f'\033[31m NG \033[0m Ping GW IPv4 {gw4}')
-        print('IPv4 GW not reachable. Check the network configuration.')
+        print(f"\033[31m NG \033[0m Ping GW IPv4 {gw4}")
+        print("IPv4 GW not reachable. Check the network configuration.")
     for target in PING_TARGETS_IPV4:
-        if checker.ping_host(target, family='ipv4'):
-            print(f'\033[32m OK \033[0m Ping IPv4 {target}')
+        if checker.ping_host(target, family="ipv4"):
+            print(f"\033[32m OK \033[0m Ping IPv4 {target}")
         else:
-            print(f'\033[31m NG \033[0m Ping IPv4 {target}')
+            print(f"\033[31m NG \033[0m Ping IPv4 {target}")
     # Ping (v6)
-    if ip6 and checker.ping_host(ip6, family='ipv6'):
-        print(f'\033[32m OK \033[0m Ping self IPv6 {ip6}')
-    if gw6 and checker.ping_host(gw6, family='ipv6'):
-        print(f'\033[32m OK \033[0m Ping GW IPv6 {gw6}')
+    if ip6 and checker.ping_host(ip6, family="ipv6"):
+        print(f"\033[32m OK \033[0m Ping self IPv6 {ip6}")
+    if gw6 and checker.ping_host(gw6, family="ipv6"):
+        print(f"\033[32m OK \033[0m Ping GW IPv6 {gw6}")
     else:
-        print(f'\033[31m NG \033[0m Ping GW IPv6 {gw6}')
-        print('IPv6 GW not reachable. Check the network configuration.')
+        print(f"\033[31m NG \033[0m Ping GW IPv6 {gw6}")
+        print("IPv6 GW not reachable. Check the network configuration.")
     for target in PING_TARGETS_IPV6:
-        if checker.ping_host(target, family='ipv6'):
-            print(f'\033[32m OK \033[0m Ping IPv6 {target}')
+        if checker.ping_host(target, family="ipv6"):
+            print(f"\033[32m OK \033[0m Ping IPv6 {target}")
         else:
-            print(f'\033[31m NG \033[0m Ping IPv6 {target}')
+            print(f"\033[31m NG \033[0m Ping IPv6 {target}")
 
     # DNS
     print("---------------dns----------------")
     for domain in DOMAIN_A_RECORDS:
         checker.dns_lookup(domain)
     for domain in DOMAIN_AAAA_RECORDS:
-        checker.dns_lookup(domain, record_type='AAAA')
+        checker.dns_lookup(domain, record_type="AAAA")
 
-    print("---------------http----------------")
     # HTTP
+    print("---------------http----------------")
     checker.http_check(HTTP_IPV4_TARGET)
     checker.http_check(HTTP_IPV6_TARGET)
 
-    print("------------traceroute--------------")
     # traceroute
-    tr_v4 = checker.traceroute_host(TRACEROUTE_TARGET, family='ipv4')
+    print("------------traceroute--------------")
+    tr_v4 = checker.traceroute_host(TRACEROUTE_TARGET, family="ipv4")
     print(tr_v4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
